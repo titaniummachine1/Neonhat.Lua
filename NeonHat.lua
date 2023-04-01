@@ -21,10 +21,12 @@ menu.Style.Outline = true                 -- Outline around the menu
     client.SetConVar("mp_respawnwavetime", -1)
 end, ItemFlags.FullWidth))]]
 local mEnable     = menu:AddComponent(MenuLib.Checkbox("Enable", true))
-local mHeight     = menu:AddComponent(MenuLib.Slider("height", -50 ,50 , 0 ))
-local mmmheight   = menu:AddComponent(MenuLib.Slider("height", 0 ,50 , 25 ))
-local mradious    = menu:AddComponent(MenuLib.Slider("radious", 1 ,85 , 15 ))
-local mresolution = menu:AddComponent(MenuLib.Slider("resolution", 1 ,360 , 32 ))
+local mmmheight   = menu:AddComponent(MenuLib.Slider("height", 0 ,50 , 11 ))
+local mradious    = menu:AddComponent(MenuLib.Slider("radious", 1 ,85 , 17 ))
+local mresolution = menu:AddComponent(MenuLib.Slider("resolution", 1 ,1200 , 720 ))
+local color       = menu:AddComponent(MenuLib.Colorpicker("Hat Color", color))
+
+
 -- debug command: ent_fire !picker Addoutput "health 99"
 local myfont = draw.CreateFont( "Verdana", 16, 800 ) -- Create a font for doDraw
 
@@ -57,32 +59,28 @@ local pLocalClass = pLocal:GetPropInt("m_iClass")
 local vhitbox_Height = 85
 local vhitbox_width = 18
     if pLocal == nil then return end
-
-    draw.SetFont( myfont )
-    draw.Color( 255, 255, 255, 255 )
-    local w, h = draw.GetScreenSize()
-    local screenPos = { w / 2 - 15, h / 2 + 35}
-
     --text
 
     -- hat
-    -- hat
--- define the vertices of the hat
--- set circle resolution
--- hat
--- ustawienie rozdzielczości koła
--- hat
--- ustawienie rozdzielczości koła
--- hat
--- ustawienie rozdzielczości koła
 
+local player = entities.GetLocalPlayer()
+local hitboxes = player:GetHitboxes()
 
+local hitboxIndex = 1 -- Set the index of the hitbox to draw
+local hitbox = hitboxes[hitboxIndex]
+local w, h = draw.GetScreenSize()
+local screenPos = { w / 2 - 15, h / 2 + 35}
+draw.SetFont( myfont )
+
+local selected_color = color:GetColor()
+-- set the color using the selected color values
+draw.Color(selected_color[1], selected_color[2], selected_color[3], selected_color[4])
 -- Calculate the vertex positions around the circle
 -- Define circle parameters
-local center = pLocalOrigin
+local center = (hitbox[1] + hitbox[2]) * 0.5
 local radius = mradious:GetValue() -- radius of the circle
 local segments = mresolution:GetValue() -- number of segments to use for the circle
-local height = mHeight:GetValue() -- height of the circle
+local height = 0
 local hat_height = height + mmmheight:GetValue() -- height of the top point
 
 -- Calculate vertices for the circle and top point
@@ -104,51 +102,19 @@ for i = 1, segments do
     draw.Line(vertices[i][1], vertices[i][2], top_vertex[1], top_vertex[2])
   end
 end
-
-
-
-
-
-
-
-
-
---[[ ustawienie rozdzielczości koła
-local resolution = 36
--- promień koła
-local radius = 50
--- wektor środka koła
-local center = pLocalOrigin
--- wektor wysokości ostrosłupa
-local height = Vector3(0, 0, 20)
--- inicjalizacja tablicy wierzchołków koła
-local vertices = {}
--- wyznaczanie pozycji wierzchołków koła
-for i = 1, resolution do
-    local angle = (2 * math.pi / resolution) * (i - 1)
-    local x = radius * math.cos(angle)
-    local y = radius * math.sin(angle)
-    vertices[i] = Vector3(center.x + x, center.y + y)
-end
--- rysowanie linii łączących kolejne wierzchołki koła oraz linii z punktów koła do wierzchołka stożka na wysokości 'height'
-    for i = 1, resolution do
-        local v1 = vertices[i]
-        local v2 = vertices[(i % resolution) + 1]
-        draw.Line(v1.x, v1.y, v1.z, height.x, height.y, height.z)
-        draw.Line(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z)
-        draw.Line(v2.x, v2.y, v2.z, height.x, height.y, height.z)
-    end
-    
--- rysowanie linii łączącej ostatni wierzchołek z pierwszym
-draw.Line(vertices[resolution], vertices[1])
-]]
 end
 
+--[[ Remove the menu when unloaded ]]--
+local function OnUnload()                                -- Called when the script is unloaded
+    MenuLib.RemoveMenu(menu)                             -- Remove the menu
+    client.Command('play "ui/buttonclickrelease"', true) -- Play the "buttonclickrelease" sound
+end
 
 --[[ Unregister previous callbacks ]]--
-
+callbacks.Unregister("Unload", "MCT_Unload")                    -- Unregister the "Unload" callback
 callbacks.Unregister("Draw", "MCT_Draw")                        -- Unregister the "Draw" callback
 --[[ Register callbacks ]]--
+callbacks.Register("Unload", "MCT_Unload", OnUnload)                         -- Register the "Unload" callback
 callbacks.Register("Draw", "MCT_Draw", doDraw)                               -- Register the "Draw" callback
 --[[ Play sound when loaded ]]--
 client.Command('play "ui/buttonclick"', true) -- Play the "buttonclick" sound when the script is loaded
